@@ -1,6 +1,6 @@
 
   
-/Users/muzaffar/Desktop/unlimint-website-preview.png
+![unlimint-website-preview](https://user-images.githubusercontent.com/22684108/195990051-d98eb92b-4bac-4874-8809-a4bc1a9a39b1.png)
 
 
 # Readme
