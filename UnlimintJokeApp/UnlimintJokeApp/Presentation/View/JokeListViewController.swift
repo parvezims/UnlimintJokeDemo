@@ -6,30 +6,17 @@
 //
 
 import UIKit
-//import RxSwift
-//import RxCocoa
-import Combine
+
 class JokeListViewController: UIViewController {
     
     var tableView = UITableView()
-    var obserevr : AnyCancellable?
-    @Published var jokeListViewModel = JokeListViewModel()
-    @Published var jokes = jokeListViewModel.jokes
+    var jokeListViewModel = JokeListViewModel()
     var dataSource:[Joke] = []
-    //private var bag = DisposeBag()
-    
+   
     override func viewDidLoad() {
-        
         super.viewDidLoad()
         jokeListViewModel = JokeListViewModel()
-        
-        // Setting up table view
         setupTableView()
-        bindTableData()
-        
-        
-       
-
     }
     
     func setupTableView() {
@@ -51,41 +38,26 @@ class JokeListViewController: UIViewController {
         tableView.delegate = self
         tableView.dataSource = self
         
+        NotificationCenter.default.addObserver(self, selector: #selector(notificationReloadTable), name: NSNotification.Name.realodTableview, object: nil)
+        
+        jokeListViewModel.scheduleTimer.startNotifier()
+
     }
     
-    func bindTableData() {
+    @objc func notificationReloadTable(notification: Notification){
         
-        // bind item to table
-
-        obserevr = $jokeListViewModel
-            .receive(on: DispatchQueue.main)
-            .sink { completion in
-            print("completion")
-        } receiveValue: { viewmodel in
-            self.dataSource = viewmodel.items
-            self.tableView.reloadData()
-        }
-        
-        obserevr = $jokeListViewModel
-            .receive(on: DispatchQueue.main)
-        
+        if let object = notification.object {
+            let jokesArr = object as! [Joke]
+            self.dataSource = jokesArr
             
-        
-//        obserevr =  jokeListViewModel.items
-//
-//            .receive(on: DispatchQueue.main)
-//            .sink(receiveCompletion: { comletion in
-//                print("")
-//            }, receiveValue: { [weak self] jokes in
-//
-//                self?.dataSource = jokes
-//                self?.tableView.reloadData()
-//            })
-        
-       // jokeListViewModel.items.subscribe()
-        
-
-        jokeListViewModel.scheduleTimer.startNotifier()
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
+        }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(Notification.Name.realodTableview)
     }
 }
 
@@ -94,7 +66,6 @@ extension JokeListViewController : UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         80.0
     }
-    
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         
@@ -111,7 +82,6 @@ extension JokeListViewController : UITableViewDelegate {
         }
     }
 }
-
 
 extension JokeListViewController : UITableViewDataSource {
     

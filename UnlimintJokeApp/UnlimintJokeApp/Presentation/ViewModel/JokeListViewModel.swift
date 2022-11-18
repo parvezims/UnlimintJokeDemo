@@ -6,9 +6,6 @@
 //
 
 import Foundation
-//import RxCocoa
-//import RxSwift
-import Combine
 
 class JokeListViewModel {
     
@@ -19,27 +16,18 @@ class JokeListViewModel {
     
     var scheduleTimer:ScheduleToFetchAPI
     var jokes = [Joke]()
-    //var items = PublishSubject<[Joke]>()
-    var items = [Joke]()
 
     @objc func getJokes(notification: Notification){
         
         if let object = notification.object {
             let jokesArr = object as! [Joke]
-            //self.items.onNext(jokesArr)
-            self.items = jokesArr
             self.jokes = jokesArr
-            
-            NotificationCenter.default.post(name:Notification.Name.contentFechedFinished , object: self.jokes)
-
-            
-//            self.items = Future { promise in
-//                promise(.success(jokesArr))
-//            }
+            NotificationCenter.default.post(name:Notification.Name.realodTableview , object: self.jokes)
         }
     }
     
     deinit {
         self.scheduleTimer.timer?.invalidate()
+        NotificationCenter.default.removeObserver(Notification.Name.contentFechedFinished)
     }
 }
