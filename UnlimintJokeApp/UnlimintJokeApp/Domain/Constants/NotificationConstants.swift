@@ -9,4 +9,6 @@ import Foundation
 
 extension Notification.Name {
     static let contentFechedFinished = NSNotification.Name(rawValue: "contentFechedFinished")
+    static let realodTableview = NSNotification.Name(rawValue: "realodTableview")
+
 }

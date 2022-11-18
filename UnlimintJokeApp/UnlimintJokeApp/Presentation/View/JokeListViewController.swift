@@ -6,15 +6,17 @@
 //
 
 import UIKit
-import RxSwift
-import RxCocoa
-
+//import RxSwift
+//import RxCocoa
+import Combine
 class JokeListViewController: UIViewController {
     
     var tableView = UITableView()
-    var jokeListViewModel = JokeListViewModel()
+    var obserevr : AnyCancellable?
+    @Published var jokeListViewModel = JokeListViewModel()
+    @Published var jokes = jokeListViewModel.jokes
     var dataSource:[Joke] = []
-    private var bag = DisposeBag()
+    //private var bag = DisposeBag()
     
     override func viewDidLoad() {
         
@@ -24,6 +26,10 @@ class JokeListViewController: UIViewController {
         // Setting up table view
         setupTableView()
         bindTableData()
+        
+        
+       
+
     }
     
     func setupTableView() {
@@ -43,47 +49,43 @@ class JokeListViewController: UIViewController {
         
         // Setting up delegates
         tableView.delegate = self
+        tableView.dataSource = self
         
     }
     
     func bindTableData() {
         
         // bind item to table
-        jokeListViewModel.items.bind(to: tableView.rx.items(
-            cellIdentifier: UNJConstans.jokeViewCellIdentifier,
-            cellType: JokeTableViewCell.self)) {
-                row, model, cell in
-                
-                cell.joke = model
-            } .disposed(by: bag)
+
+        obserevr = $jokeListViewModel
+            .receive(on: DispatchQueue.main)
+            .sink { completion in
+            print("completion")
+        } receiveValue: { viewmodel in
+            self.dataSource = viewmodel.items
+            self.tableView.reloadData()
+        }
         
-        // bind item selected handler
-        tableView.rx.modelSelected(Joke.self).bind { joke in
-            print(joke.joke)
-        }.disposed(by: bag)
+        obserevr = $jokeListViewModel
+            .receive(on: DispatchQueue.main)
         
-        // fetch Items
+            
+        
+//        obserevr =  jokeListViewModel.items
+//
+//            .receive(on: DispatchQueue.main)
+//            .sink(receiveCompletion: { comletion in
+//                print("")
+//            }, receiveValue: { [weak self] jokes in
+//
+//                self?.dataSource = jokes
+//                self?.tableView.reloadData()
+//            })
+        
+       // jokeListViewModel.items.subscribe()
+        
+
         jokeListViewModel.scheduleTimer.startNotifier()
-        
-        
-        // adding animation
-        tableView.rx.willDisplayCell
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { (cell, indexPath) in
-                
-                if indexPath.row == 0 {
-                    
-                    cell.alpha = 0
-                    let transform = CGAffineTransform.init(scaleX: 0.6, y: 0.6)
-                    cell.transform = transform
-                    
-                    UIView.animate(withDuration: 2, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: 0.5, options:  .curveEaseInOut, animations: {
-                        cell.alpha = 1
-                        cell.layer.transform = CATransform3DIdentity
-                    }, completion: nil)
-                }
-            })
-            .disposed(by: bag)
     }
 }
 
@@ -92,6 +94,37 @@ extension JokeListViewController : UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         80.0
     }
+    
+    
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        
+        if indexPath.row == 0 {
+            
+            cell.alpha = 0
+            let transform = CGAffineTransform.init(scaleX: 0.6, y: 0.6)
+            cell.transform = transform
+            
+            UIView.animate(withDuration: 2, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: 0.5, options:  .curveEaseInOut, animations: {
+                cell.alpha = 1
+                cell.layer.transform = CATransform3DIdentity
+            }, completion: nil)
+        }
+    }
 }
 
+
+extension JokeListViewController : UITableViewDataSource {
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: UNJConstans.jokeViewCellIdentifier) as! JokeTableViewCell
+        let model = dataSource[indexPath.row]
+        cell.joke = model
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        
+        return dataSource.count
+    }
+}
 
