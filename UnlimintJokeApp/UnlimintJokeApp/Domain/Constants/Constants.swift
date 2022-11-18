@@ -9,6 +9,6 @@ import Foundation
 
 
 struct Constant {
-    static let intervalTiming = 10
+    static let intervalTiming = 60
     static let maxJokeLength = 10
 }
