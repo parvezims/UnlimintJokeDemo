@@ -6,6 +6,12 @@
 //
 
 import Foundation
+import Combine
+
+enum Output {
+  case fetchQuoteDidFail(error: Error)
+  case fetchQuoteDidSucceed(jokes: [Joke])
+}
 
 class JokeListViewModel {
     
@@ -16,12 +22,35 @@ class JokeListViewModel {
     
     var scheduleTimer:ScheduleToFetchAPI
     var jokes = [Joke]()
+    var items: AnyPublisher<[Joke], Error>
+    
+    private let output: PassthroughSubject<Output, Never> = .init()
+    private var cancellables = AnyCancellable.self
+
 
     @objc func getJokes(notification: Notification){
         
         if let object = notification.object {
             let jokesArr = object as! [Joke]
             self.jokes = jokesArr
+            
+            
+           
+            
+            
+            cancellables = items.sink { [weak self] completion in
+                
+              if case .failure(let error) = completion {
+                self?.output.send(.fetchQuoteDidFail(error: error))
+              }
+            } receiveValue: { [weak self] quote in
+                
+              self?.output.send(.fetchQuoteDidSucceed(quote: self.jokes))
+                
+            }.store(in: &cancellables)
+
+            
+            
             NotificationCenter.default.post(name:Notification.Name.realodTableview , object: self.jokes)
         }
     }
